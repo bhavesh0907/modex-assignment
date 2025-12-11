@@ -1,45 +1,61 @@
 // backend/src/server.js
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+
 import showRoutes from "./show.routes.js";
 import bookingRoutes from "./booking.routes.js";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 4000;
 
-// IMPORTANT: allow both localhost and Vercel frontend
+// --- CORS SETUP (frontend + local) ---
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:5174",
+  "https://modex-assignment.vercel.app",
   "https://modex-assignment-6poywgh65-bhavesh0907s-projects.vercel.app",
 ];
 
 app.use(
   cors({
     origin(origin, callback) {
-      // allow mobile apps / curl etc. with no origin
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      // allow server-to-server or curl (no origin)
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
     },
-    credentials: true,
   })
 );
 
+// --- BODY PARSER ---
 app.use(express.json());
 
-// Simple health check
+// --- ROOT + HEALTH CHECK ROUTES ---
 app.get("/", (req, res) => {
   res.send("Modex backend running");
 });
 
-// Routes
-app.use(showRoutes);
-app.use(bookingRoutes);
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 
+// --- API ROUTES ---
+app.use("/shows", showRoutes);       // /shows, /shows/:id
+app.use("/bookings", bookingRoutes); // /bookings
+
+// --- GLOBAL ERROR HANDLER (optional but safe) ---
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ error: "Internal server error" });
+});
+
+// --- START SERVER ---
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);
 });
+
+export default app;
