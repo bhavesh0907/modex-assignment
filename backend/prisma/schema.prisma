@@ -1,0 +1,26 @@
+// backend/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Show {
+  id         Int       @id @default(autoincrement())
+  name       String
+  startTime  DateTime
+  totalSeats Int
+  bookings   Booking[]
+}
+
+model Booking {
+  id         Int      @id @default(autoincrement())
+  show       Show     @relation(fields: [showId], references: [id])
+  showId     Int
+  seatNumber Int
+  createdAt  DateTime @default(now())
+}

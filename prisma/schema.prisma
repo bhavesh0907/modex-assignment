@@ -1,0 +1,49 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Show {
+  id         String   @id @default(uuid())
+  name       String
+  startTime  DateTime
+  totalSeats Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  bookings   Booking[]
+  seats      BookingSeat[]
+}
+
+model Booking {
+  id        String   @id @default(uuid())
+  showId    String
+  status    BookingStatus
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  show      Show     @relation(fields: [showId], references: [id])
+  seats     BookingSeat[]
+}
+
+model BookingSeat {
+  id         String   @id @default(uuid())
+  bookingId  String
+  showId     String
+  seatNumber Int
+
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  show       Show     @relation(fields: [showId], references: [id])
+
+  @@unique([showId, seatNumber]) // prevents overbooking
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
