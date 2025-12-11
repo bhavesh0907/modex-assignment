@@ -1,211 +1,251 @@
 // frontend/src/pages/Booking.jsx
-import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import api from "../api";
 
-const STORAGE_KEY = "ticketbook_bookings";
-
-function loadBookings() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveBookings(bookings) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(bookings));
-}
+const BOOKINGS_KEY = "ticketbook_bookings";
 
 function Booking() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // show is passed from Home via Link state
-  const initialShow = location.state?.show || null;
-
-  const [show] = useState(initialShow);
+  const [show, setShow] = useState(null);
+  const [loadingShow, setLoadingShow] = useState(true);
+  const [seatCount] = useState(160); // you can change this if needed
   const [selectedSeats, setSelectedSeats] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(
-    !initialShow ? "Show details not available. Please go back and open again from Home." : ""
-  );
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Basic 10x10 grid or up to totalSeats
-  const seatNumbers = useMemo(() => {
-    if (!show) return [];
-    return Array.from({ length: show.totalSeats }, (_, i) => i + 1);
-  }, [show]);
+  // ------- Load show details from backend (one time) -------
+  useEffect(() => {
+    let cancelled = false;
 
-  const toggleSeat = (seat) => {
+    async function fetchShow() {
+      setLoadingShow(true);
+      setError("");
+
+      try {
+        const res = await api.get(`/shows/${id}`);
+        if (!cancelled) {
+          setShow(res.data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Error fetching show:", err);
+          setError(
+            "Failed to load show details. Please refresh or try again in a moment."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingShow(false);
+        }
+      }
+    }
+
+    fetchShow();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  // ------- Seat selection -------
+  const toggleSeat = (seatNumber, isBooked) => {
+    if (isBooked || bookingLoading) return;
+
     setSelectedSeats((prev) =>
-      prev.includes(seat)
-        ? prev.filter((s) => s !== seat)
-        : [...prev, seat]
+      prev.includes(seatNumber)
+        ? prev.filter((s) => s !== seatNumber)
+        : [...prev, seatNumber]
     );
   };
 
-  const handleConfirm = () => {
+  // ------- Confirm booking -------
+  const confirmBooking = async () => {
     if (!show) return;
-
     if (selectedSeats.length === 0) {
       alert("Please select at least one seat.");
       return;
     }
 
-    setIsSubmitting(true);
-    setError("");
+    const userJson = localStorage.getItem("ticketbook_user");
+    if (!userJson) {
+      alert("Please login again to continue booking.");
+      navigate("/login");
+      return;
+    }
+    const user = JSON.parse(userJson);
 
     try {
-      const existing = loadBookings();
+      setBookingLoading(true);
+      setError("");
 
+      // 1) Create booking on backend
+      await api.post("/bookings", {
+        showId: Number(id),
+        seatNumbers: selectedSeats,
+        userName: user.name,
+        userEmail: user.email,
+      });
+
+      // 2) Store a simplified booking locally for MyBookings screen
+      const existing =
+        JSON.parse(localStorage.getItem(BOOKINGS_KEY) || "[]") || [];
+
+      const now = new Date();
       const newBooking = {
-        id: Date.now(),
+        bookingId: Date.now(), // local id
         showId: show.id,
-        showTitle: show.title,
+        showName: show.title || show.name,
         startTime: show.startTime,
-        seats: selectedSeats,
+        seatNumbers: [...selectedSeats],
+        totalSeats: show.totalSeats,
         status: "confirmed",
-        createdAt: new Date().toISOString(),
+        createdAt: now.toISOString(),
+        userName: user.name,
+        userEmail: user.email,
       };
 
-      saveBookings([...existing, newBooking]);
+      localStorage.setItem(
+        BOOKINGS_KEY,
+        JSON.stringify([...existing, newBooking])
+      );
 
-      setSelectedSeats([]);
       alert("Booking confirmed!");
+      setSelectedSeats([]);
+
+      // Optional: reload show from backend to update availability
+      const refreshed = await api.get(`/shows/${id}`);
+      setShow(refreshed.data);
+
+      // Navigate to My Bookings page
       navigate("/my-bookings");
-    } catch (e) {
-      console.error("Error saving booking:", e);
-      setError("Failed to confirm booking. Please try again.");
+    } catch (err) {
+      console.error("Booking error:", err);
+      setError(
+        "Booking failed. Some seats may already be booked or the server is busy."
+      );
+      alert(
+        "Booking failed. Please try again. If the problem continues, refresh the page."
+      );
     } finally {
-      setIsSubmitting(false);
+      setBookingLoading(false);
     }
   };
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  // ------- Render helpers -------
+  if (loadingShow) {
+    return (
+      <div className="page booking-page">
+        <div className="navbar">
+          <Link to="/">Home</Link>
+          <Link to="/my-bookings">My Bookings</Link>
+        </div>
+        <div className="loader">Loading seat layout...</div>
+      </div>
+    );
+  }
 
   if (!show) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-400 via-purple-400 to-purple-600 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-lg w-full text-center">
-          <h1 className="text-2xl font-semibold mb-3">
-            Show not found
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Please return to the home page and open the show again.
-          </p>
-          <Link
-            to="/"
-            className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg"
-          >
-            Back to Shows
+      <div className="page booking-page">
+        <div className="navbar">
+          <Link to="/">Home</Link>
+          <Link to="/my-bookings">My Bookings</Link>
+        </div>
+        <p style={{ color: "white", textAlign: "center", marginTop: "4rem" }}>
+          Failed to load show. Please go back to the shows list.
+        </p>
+        <div style={{ textAlign: "center", marginTop: "1rem" }}>
+          <Link to="/">
+            <button>Back to Shows</button>
           </Link>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-400 via-purple-400 to-purple-600 text-gray-900">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <header className="flex justify-between items-center mb-6">
-          <Link to="/" className="text-xl font-bold text-yellow-200">
-            🎟️ TicketBook
-          </Link>
-          <nav className="space-x-4">
-            <Link to="/" className="text-white hover:underline">
-              Home
-            </Link>
-            <Link
-              to="/my-bookings"
-              className="text-white hover:underline"
-            >
-              My Bookings
-            </Link>
-          </nav>
-        </header>
+  // seats array [1..seatCount]
+  const seatsArray = Array.from({ length: seatCount }, (_, i) => i + 1);
 
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h1 className="text-2xl font-semibold mb-1">{show.title}</h1>
-          <p className="text-gray-600 mb-2">
-            <span className="font-semibold">Show ID:</span> {show.id}
+  // if backend sends booked seats, mark them
+  const bookedSeatNumbers =
+    show.seats?.filter((s) => s.booked).map((s) => s.number) || [];
+
+  return (
+    <div className="page booking-page">
+      <header className="navbar">
+        <div className="logo">🎟️ TicketBook</div>
+        <nav>
+          <Link to="/">Home</Link>
+          <Link to="/my-bookings">My Bookings</Link>
+        </nav>
+      </header>
+
+      <main className="booking-main">
+        <section className="booking-header">
+          <h1>{show.title || show.name}</h1>
+          <p>
+            Start Time:{" "}
+            {show.startTime
+              ? new Date(show.startTime).toLocaleString()
+              : "N/A"}
           </p>
-          <p className="text-gray-600 mb-2">
-            <span className="font-semibold">Start Time:</span>{" "}
-            {new Date(show.startTime).toLocaleString()}
+          <p>
+            Available Seats:{" "}
+            {show.availableSeats ?? show.totalSeats - bookedSeatNumbers.length}{" "}
+            / {show.totalSeats}
           </p>
-          <p className="text-gray-600">
-            <span className="font-semibold">Total Seats:</span>{" "}
-            {show.totalSeats}
-          </p>
-        </div>
+        </section>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-100 border border-red-300 text-red-800 px-4 py-2">
+          <div className="banner banner-error" style={{ marginBottom: "1rem" }}>
             {error}
           </div>
         )}
 
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            Select Your Seats
-          </h2>
+        <section className="seat-layout">
+          <h2>Select Seats</h2>
+          <div className="seat-grid">
+            {seatsArray.map((seatNumber) => {
+              const isBooked = bookedSeatNumbers.includes(seatNumber);
+              const isSelected = selectedSeats.includes(seatNumber);
 
-          <div className="grid grid-cols-8 gap-3 mb-6 justify-items-center">
-            {seatNumbers.map((seat) => {
-              const isSelected = selectedSeats.includes(seat);
+              let className = "seat";
+              if (isBooked) className += " seat-booked";
+              else if (isSelected) className += " seat-selected";
+
               return (
                 <button
-                  key={seat}
-                  onClick={() => toggleSeat(seat)}
-                  className={`w-10 h-10 rounded-md text-sm font-semibold border
-                    ${
-                      isSelected
-                        ? "bg-green-500 text-white border-green-600"
-                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
-                    }`}
+                  key={seatNumber}
+                  className={className}
+                  disabled={isBooked || bookingLoading}
+                  onClick={() => toggleSeat(seatNumber, isBooked)}
                 >
-                  {seat}
+                  {seatNumber}
                 </button>
               );
             })}
           </div>
+        </section>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">
-                Selected Seats:{" "}
-                {selectedSeats.length === 0
-                  ? "None"
-                  : selectedSeats.join(", ")}
-              </p>
-              <p className="text-sm text-gray-600">
-                Seat Price: ₹150 per seat
-              </p>
-              <p className="text-sm font-semibold text-gray-800 mt-1">
-                Total: ₹{selectedSeats.length * 150}
-              </p>
-            </div>
-
-            <button
-              onClick={handleConfirm}
-              disabled={isSubmitting || selectedSeats.length === 0}
-              className={`px-5 py-2 rounded-lg font-semibold text-white ${
-                isSubmitting || selectedSeats.length === 0
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {isSubmitting
-                ? "Confirming..."
-                : `Confirm Booking (${selectedSeats.length})`}
-            </button>
-          </div>
-        </div>
-      </div>
+        <section className="booking-actions">
+          <p>
+            Selected Seats:{" "}
+            {selectedSeats.length === 0
+              ? "None"
+              : selectedSeats.sort((a, b) => a - b).join(", ")}
+          </p>
+          <button
+            onClick={confirmBooking}
+            disabled={bookingLoading || selectedSeats.length === 0}
+          >
+            {bookingLoading
+              ? "Confirming..."
+              : `Confirm Booking (${selectedSeats.length} seats)`}
+          </button>
+        </section>
+      </main>
     </div>
   );
 }
