@@ -1,245 +1,178 @@
+// frontend/src/pages/MyBookings.jsx
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+
+const STORAGE_KEY = "ticketbook_bookings";
+
+function loadBookings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
 function MyBookings() {
   const [bookings, setBookings] = useState([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    try {
-      const userRaw = localStorage.getItem("ticketbook_user");
-      const user = userRaw ? JSON.parse(userRaw) : null;
-
-      const storedRaw = localStorage.getItem("ticketbook_bookings");
-      const stored = storedRaw ? JSON.parse(storedRaw) : [];
-
-      // If we have a logged-in user, filter by his email
-      const filtered =
-        user?.email
-          ? stored.filter((b) => b.userEmail === user.email)
-          : stored;
-
-      setBookings(filtered);
-    } catch (err) {
-      console.error("Failed to load bookings from localStorage", err);
-      setBookings([]);
-    }
+    setBookings(loadBookings());
   }, []);
 
   const confirmedCount = bookings.filter(
-    (b) => b.status === "CONFIRMED"
+    (b) => b.status === "confirmed"
   ).length;
   const pendingCount = bookings.filter(
-    (b) => b.status === "PENDING"
+    (b) => b.status === "pending"
   ).length;
   const totalCount = bookings.length;
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        padding: "40px 16px",
-        background:
-          "linear-gradient(135deg, #6a11cb 0%, #2575fc 50%, #4e54c8 100%)",
-        color: "#222",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      }}
-    >
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "24px",
-          }}
-        >
-          <h1 style={{ color: "#111", fontSize: "32px", fontWeight: 700 }}>
-            My Bookings
-          </h1>
-          <button
-            onClick={() => navigate("/")}
-            style={{
-              padding: "8px 16px",
-              borderRadius: "6px",
-              border: "none",
-              backgroundColor: "#fff",
-              cursor: "pointer",
-            }}
+    <div className="min-h-screen bg-gradient-to-b from-indigo-400 via-purple-400 to-purple-600 text-gray-900">
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <header className="flex justify-between items-center mb-6">
+          <Link to="/" className="text-xl font-bold text-yellow-200">
+            🎟️ TicketBook
+          </Link>
+          <nav className="space-x-4">
+            <Link to="/" className="text-white hover:underline">
+              Home
+            </Link>
+            <span className="text-white font-semibold">
+              My Bookings
+            </span>
+          </nav>
+        </header>
+
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-white">My Bookings</h1>
+          <Link
+            to="/"
+            className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm hover:bg-black/80"
           >
             ← Back to Shows
-          </button>
+          </Link>
         </div>
 
-        {/* Stats */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: "16px",
-            marginBottom: "24px",
-          }}
-        >
-          <StatCard label="Confirmed" value={confirmedCount} />
-          <StatCard label="Pending" value={pendingCount} />
-          <StatCard label="Total Bookings" value={totalCount} />
+        {/* Summary cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-xl shadow-md p-4 text-center">
+            <div className="text-2xl font-bold text-green-600 mb-1">
+              {confirmedCount}
+            </div>
+            <div className="text-gray-600 text-sm">Confirmed</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-4 text-center">
+            <div className="text-2xl font-bold text-yellow-600 mb-1">
+              {pendingCount}
+            </div>
+            <div className="text-gray-600 text-sm">Pending</div>
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600 mb-1">
+              {totalCount}
+            </div>
+            <div className="text-gray-600 text-sm">Total Bookings</div>
+          </div>
         </div>
 
-        {/* Content */}
-        <div
-          style={{
-            backgroundColor: "#f9fafb",
-            borderRadius: "16px",
-            padding: "32px 24px",
-            boxShadow: "0 10px 25px rgba(15, 23, 42, 0.25)",
-          }}
-        >
-          {bookings.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Bookings list */}
+        {bookings.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-md p-8 text-center mb-8">
+            <div className="text-5xl mb-4">📝</div>
+            <h2 className="text-xl font-semibold mb-2">
+              No bookings yet
+            </h2>
+            <p className="text-gray-600 mb-4">
+              You haven&apos;t made any bookings. Browse shows and book
+              tickets to get started!
+            </p>
+            <Link
+              to="/"
+              className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2 rounded-lg"
+            >
+              Browse Shows
+            </Link>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 className="text-lg font-semibold mb-4">
+              Your Bookings
+            </h2>
+            <div className="space-y-3">
               {bookings
                 .slice()
                 .reverse()
                 .map((b) => (
-                  <BookingRow key={b.id} booking={b} />
+                  <div
+                    key={b.id}
+                    className="border rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+                  >
+                    <div>
+                      <div className="font-semibold text-gray-800">
+                        {b.showTitle}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Show ID: {b.showId}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Time:{" "}
+                        {new Date(b.startTime).toLocaleString()}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Seats: {b.seats.join(", ")}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                          b.status === "confirmed"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}
+                      >
+                        {b.status}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Booked on{" "}
+                        {new Date(b.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
                 ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Info box */}
-        <div
-          style={{
-            marginTop: "24px",
-            backgroundColor: "#e3f2fd",
-            borderRadius: "12px",
-            padding: "16px 20px",
-          }}
-        >
-          <h3 style={{ marginBottom: 8 }}>
-            ❓ Booking Information
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5">
+          <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+            <span className="text-red-500 text-xl">?</span> Booking
+            Information
           </h3>
-          <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "14px" }}>
+          <ul className="text-sm text-gray-700 list-disc ml-5 space-y-1">
             <li>
-              <strong>Confirmed Bookings:</strong> Your seats are reserved and
-              guaranteed.
+              <strong>Confirmed Bookings:</strong> Your seats are
+              reserved and guaranteed.
             </li>
             <li>
-              <strong>Pending Bookings:</strong> Must be confirmed within 2
-              minutes or seats may be released.
+              <strong>Pending Bookings:</strong> Must be confirmed
+              within 2 minutes or seats are released. (For now, all
+              bookings are marked confirmed.)
             </li>
             <li>
-              <strong>Cancellation:</strong> You can cancel confirmed bookings
-              anytime (demo only).
+              <strong>Cancellation:</strong> You can extend this page to
+              support cancellation and automatic refunds.
             </li>
             <li>
               <strong>Seat Price:</strong> Each seat costs ₹150.
             </li>
             <li>
-              <strong>Show ID:</strong> Use this to view details about your
-              booked show.
+              <strong>Show ID:</strong> Use this to view details about
+              your booked show.
             </li>
           </ul>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({ label, value }) {
-  return (
-    <div
-      style={{
-        backgroundColor: "#f9fafb",
-        borderRadius: "16px",
-        padding: "16px",
-        textAlign: "center",
-        boxShadow: "0 8px 20px rgba(15, 23, 42, 0.2)",
-      }}
-    >
-      <div style={{ fontSize: "28px", fontWeight: 700, marginBottom: 4 }}>
-        {value}
-      </div>
-      <div style={{ fontSize: "14px", color: "#4b5563" }}>{label}</div>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: "18px", fontWeight: 600, marginBottom: 8 }}>
-        No bookings yet
-      </div>
-      <p style={{ marginBottom: 16, color: "#4b5563" }}>
-        You have not made any bookings. Browse shows and book tickets to get
-        started!
-      </p>
-      <Link to="/">
-        <button
-          style={{
-            padding: "10px 20px",
-            borderRadius: "999px",
-            border: "none",
-            backgroundColor: "#22c55e",
-            color: "#fff",
-            cursor: "pointer",
-            fontWeight: 600,
-          }}
-        >
-          Browse Shows
-        </button>
-      </Link>
-    </div>
-  );
-}
-
-function BookingRow({ booking }) {
-  return (
-    <div
-      style={{
-        backgroundColor: "#fff",
-        borderRadius: "12px",
-        padding: "16px 18px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        border: "1px solid #e5e7eb",
-      }}
-    >
-      <div>
-        <div style={{ fontWeight: 600 }}>{booking.showName}</div>
-        <div style={{ fontSize: "13px", color: "#4b5563" }}>
-          {new Date(booking.startTime).toLocaleString()}
-        </div>
-        <div style={{ fontSize: "13px", marginTop: 4 }}>
-          Seats: {booking.seatNumbers.join(", ")}
-        </div>
-      </div>
-      <div style={{ textAlign: "right" }}>
-        <div
-          style={{
-            fontSize: "12px",
-            fontWeight: 600,
-            padding: "4px 10px",
-            borderRadius: "999px",
-            backgroundColor:
-              booking.status === "CONFIRMED" ? "#bbf7d0" : "#fee2e2",
-            color:
-              booking.status === "CONFIRMED" ? "#166534" : "#b91c1c",
-          }}
-        >
-          {booking.status}
-        </div>
-        <div
-          style={{
-            marginTop: 4,
-            fontSize: "11px",
-            color: "#6b7280",
-          }}
-        >
-          Show ID: {booking.showId}
         </div>
       </div>
     </div>
