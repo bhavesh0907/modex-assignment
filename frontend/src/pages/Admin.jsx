@@ -59,7 +59,15 @@ function Admin() {
 
       <h2>Create Show</h2>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "320px" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          maxWidth: "320px",
+          marginBottom: "2rem",
+        }}
+      >
         <input
           type="text"
           placeholder="Show Name"
@@ -85,15 +93,15 @@ function Admin() {
         </button>
       </div>
 
-      <h3 style={{ marginTop: "2rem" }}>All Shows</h3>
+      <h3>All Shows</h3>
       {shows.length === 0 ? (
         <p>No shows created yet.</p>
       ) : (
         <ul>
           {shows.map((s) => (
-            <li key={s.id}>
-              <strong>{s.name}</strong> –{" "}
-              {new Date(s.startTime).toLocaleString()} – Seats:{" "}
+            <li key={s.id} style={{ marginBottom: "0.5rem" }}>
+              <strong>{s.name}</strong>{" "}
+              – {new Date(s.startTime).toLocaleString()} – Seats:{" "}
               {s.totalSeats}
             </li>
           ))}

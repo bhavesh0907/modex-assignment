@@ -23,7 +23,7 @@ function Home() {
   }, []);
 
   if (loading) {
-    return <div>Loading shows...</div>;
+    return <div style={{ padding: "2rem" }}>Loading shows...</div>;
   }
 
   return (
@@ -40,15 +40,16 @@ function Home() {
       ) : (
         <ul>
           {shows.map((show) => (
-            <li key={show.id} style={{ marginBottom: "0.5rem" }}>
+            <li key={show.id} style={{ marginBottom: "0.75rem" }}>
               <strong>{show.name}</strong>
               <br />
               Time: {new Date(show.startTime).toLocaleString()}
               <br />
-              Seats: {show.totalSeats - (show.bookedSeats || 0)}/{show.totalSeats}
+              Seats available:{" "}
+              {show.availableSeats ?? show.totalSeats}/{show.totalSeats}
               <br />
               <Link to={`/booking/${show.id}`}>
-                <button>Book</button>
+                <button style={{ marginTop: "0.25rem" }}>Book</button>
               </Link>
             </li>
           ))}
