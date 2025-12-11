@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import api from "../Api.js";
+import api from "../api.js";
 
 function Booking() {
   const { id } = useParams();
