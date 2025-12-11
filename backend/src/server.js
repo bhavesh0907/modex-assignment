@@ -40,8 +40,6 @@ app.get("/health", (req, res) => {
 });
 
 // ---------- SHOW ROUTES ----------
-
-// GET /shows – list all shows with bookedSeats
 app.get("/shows", async (req, res) => {
   try {
     const shows = await prisma.show.findMany({
@@ -64,7 +62,6 @@ app.get("/shows", async (req, res) => {
   }
 });
 
-// POST /admin/shows – create a new show
 app.post("/admin/shows", async (req, res) => {
   const { name, startTime, totalSeats } = req.body;
 
@@ -88,7 +85,6 @@ app.post("/admin/shows", async (req, res) => {
   }
 });
 
-// GET /shows/:id – show details + seat map
 app.get("/shows/:id", async (req, res) => {
   const showId = Number(req.params.id);
 
@@ -130,9 +126,6 @@ app.get("/shows/:id", async (req, res) => {
 });
 
 // ---------- BOOKING ROUTES ----------
-
-// POST /bookings – book one or more seats
-// body: { showId: number, seatNumbers: number[] }
 app.post("/bookings", async (req, res) => {
   const { showId, seatNumbers } = req.body;
 
@@ -143,7 +136,6 @@ app.post("/bookings", async (req, res) => {
   }
 
   try {
-    // Check for already booked seats
     const existing = await prisma.booking.findMany({
       where: {
         showId: Number(showId),
@@ -160,7 +152,6 @@ app.post("/bookings", async (req, res) => {
       });
     }
 
-    // Create bookings
     await prisma.booking.createMany({
       data: seatNumbers.map((n) => ({
         showId: Number(showId),
@@ -175,7 +166,12 @@ app.post("/bookings", async (req, res) => {
   }
 });
 
-// ---------- GLOBAL ERROR HANDLER ----------
+// ---------- 404 + ERROR HANDLERS ----------
+app.use((req, res) => {
+  // This will help you see what path is really being hit
+  res.status(404).json({ error: "Route not found", path: req.path });
+});
+
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({ error: "Internal server error" });
