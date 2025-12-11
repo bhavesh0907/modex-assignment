@@ -1,45 +1,59 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api from "../api";
+import api from "../api.js";
 
 function Home() {
   const [shows, setShows] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchShows = async () => {
+    async function fetchShows() {
       try {
         const res = await api.get("/shows");
         setShows(res.data);
       } catch (err) {
-        console.error("Failed to fetch shows:", err);
+        console.error("Failed to fetch shows", err);
+        alert("Failed to load shows");
+      } finally {
+        setLoading(false);
       }
-    };
+    }
 
     fetchShows();
   }, []);
 
+  if (loading) {
+    return <div>Loading shows...</div>;
+  }
+
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "2rem" }}>
       <h1>Modex Booking Demo</h1>
-      <Link to="/admin">Admin</Link>
+      <nav style={{ marginBottom: "1rem" }}>
+        <Link to="/">User Home</Link> | <Link to="/admin">Admin</Link>
+      </nav>
 
       <h2>Available Shows</h2>
 
-      {shows.length === 0 && <p>No shows available</p>}
-
-      {shows.map((show) => (
-        <div key={show.id} style={{ marginBottom: "20px" }}>
-          <b>{show.name}</b>
-          <br />
-          Time: {new Date(show.startTime).toLocaleString()}
-          <br />
-          Seats: {show.totalSeats}
-          <br />
-          <Link to={`/booking/${show.id}`}>
-            <button>Book</button>
-          </Link>
-        </div>
-      ))}
+      {shows.length === 0 ? (
+        <p>No shows available.</p>
+      ) : (
+        <ul>
+          {shows.map((show) => (
+            <li key={show.id} style={{ marginBottom: "0.5rem" }}>
+              <strong>{show.name}</strong>
+              <br />
+              Time: {new Date(show.startTime).toLocaleString()}
+              <br />
+              Seats: {show.totalSeats - (show.bookedSeats || 0)}/{show.totalSeats}
+              <br />
+              <Link to={`/booking/${show.id}`}>
+                <button>Book</button>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
