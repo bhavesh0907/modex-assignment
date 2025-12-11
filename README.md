@@ -7,11 +7,11 @@ Both frontend (Vercel) and backend (Render) are fully deployed.
 🔹 Live Links
 Frontend (Vercel):
 
-https://modex-assignment.vercel.app
+[https://modex-assignment.vercel.app](https://modex-assignment.vercel.app/)
 
 Backend (Render):
 
-https://modex-backend-ir7z.onrender.com
+[https://modex-backend-ir7z.onrender.com](https://modex-backend-irt7.onrender.com)
 
 📌 Overview
 
@@ -120,7 +120,7 @@ status	String	confirmed / cancelled
 createdAt	Date	Timestamp
 📡 API Documentation
 Base URL
-https://modex-backend-ir7z.onrender.com
+[https://modex-backend-ir7z.onrender.com](https://modex-backend-irt7.onrender.com)
 
 Show APIs
 GET /shows
