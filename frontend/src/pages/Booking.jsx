@@ -1,60 +1,73 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { api } from "../api";
-import SeatGrid from "../components/SeatGrid";
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import api from "../api";
 
-export default function Booking() {
-  const { showId } = useParams();
+function Booking() {
+  const { id } = useParams();
+  const [show, setShow] = useState(null);
   const [seats, setSeats] = useState([]);
-  const [selected, setSelected] = useState([]);
-
-  const loadSeats = () => {
-    api.get(`/shows/${showId}`)
-      .then(res => setSeats(res.data.seats))
-      .catch(() => alert("Failed to load seats"));
-  };
 
   useEffect(() => {
-    loadSeats();
-  }, []);
+    const fetchShow = async () => {
+      try {
+        const res = await api.get(`/shows/${id}`);
+        setShow(res.data);
+      } catch (err) {
+        console.error("Error fetching show:", err);
+      }
+    };
+    fetchShow();
+  }, [id]);
 
-  const toggleSeat = (number) => {
-    if (selected.includes(number)) {
-      setSelected(selected.filter(n => n !== number));
-    } else {
-      setSelected([...selected, number]);
-    }
+  const toggleSeat = (seatNumber) => {
+    setSeats((prev) =>
+      prev.includes(seatNumber)
+        ? prev.filter((s) => s !== seatNumber)
+        : [...prev, seatNumber]
+    );
   };
 
-  const confirmBooking = async () => {
+  const confirm = async () => {
     try {
-      await api.post("/bookings", {
-        showId: Number(showId),
-        seatNumbers: selected
+      await api.post(`/shows/${id}/book`, {
+        seats,
       });
 
       alert("Booking confirmed!");
-      setSelected([]);
-      loadSeats();
-
+      setSeats([]);
     } catch (err) {
-      alert("Booking failed: seats already booked");
+      console.error("Booking error:", err);
+      alert("Failed to confirm booking");
     }
   };
 
+  if (!show) return <p>Loading...</p>;
+
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
+      <h1>Modex Booking Demo</h1>
+      <Link to="/">User Home</Link> | <Link to="/admin">Admin</Link>
+
       <h2>Booking Page</h2>
 
-      <SeatGrid
-        seats={seats}
-        selectedSeats={selected}
-        onToggle={toggleSeat}
-      />
+      <div>
+        {Array.from({ length: show.totalSeats }, (_, i) => i + 1).map((seat) => (
+          <button
+            key={seat}
+            onClick={() => toggleSeat(seat)}
+            style={{
+              margin: "5px",
+              backgroundColor: seats.includes(seat) ? "green" : "lightgray",
+            }}
+          >
+            {seat}
+          </button>
+        ))}
+      </div>
 
-      <button onClick={confirmBooking} style={{ marginTop: "20px" }}>
-        Confirm Booking
-      </button>
+      <button onClick={confirm}>Confirm Booking</button>
     </div>
   );
 }
+
+export default Booking;
