@@ -1,82 +1,86 @@
-Full Stack Ticket Booking System – Modex Assignment
+🎬 Full Stack Movie Ticket Booking System
 
-A complete end-to-end movie ticket booking platform built for the Modex Full Stack Developer Assessment.
-The system allows users to browse shows, book seats, manage bookings, and enables admins to create shows.
-Both frontend (Vercel) and backend (Render) are fully deployed.
+Modex Full Stack Developer Assignment
 
-🔹 Live Links
-Frontend (Vercel):
+A complete end-to-end movie ticket booking platform built as part of the Modex Full Stack Developer Assessment.
+The system enables users to browse shows, select seats, manage bookings, and allows admins to create and manage shows.
 
-[https://modex-assignment.vercel.app](https://modex-assignment.vercel.app/)
+Both frontend and backend are fully deployed with CI/CD pipelines.
 
-Backend (Render):
+🔗 Live Demo
+Frontend (Vercel)
 
-[https://modex-backend-ir7z.onrender.com](https://modex-backend-irt7.onrender.com)
+👉 https://modex-assignment.vercel.app
 
-📌 Overview
+Backend (Render)
 
-This project demonstrates a fully functional full-stack application including:
+👉 https://modex-backend-ir7z.onrender.com
 
-React frontend with seat selection UI
+📌 Project Overview
 
-Express + Prisma backend with PostgreSQL
+This project demonstrates a production-ready full-stack application, covering:
 
-Real-time seat updates via polling
+Interactive seat booking UI
 
-User booking management
+RESTful backend APIs
 
-Admin show creation
+Database design with Prisma ORM
 
-Fully deployed system with CI/CD (GitHub → Vercel & Render)
+Deployment on cloud platforms
+
+CI/CD via GitHub integrations
 
 ✨ Features
-User Features
+👤 User Features
 
-View all available shows
+View all available movie shows
 
-See seat availability using a grid layout
+Real-time seat availability (auto-refresh)
 
-Select multiple seats and confirm booking
+Select and book multiple seats
 
-View all their bookings
+View booking history
 
 Cancel bookings anytime
 
-Auto-refresh every few seconds
-
-Stores user identity using LocalStorage
-
-Admin Features
-
-Create new shows
-
-Add movie name, datetime, seat capacity
-
-View all shows
-
-System Features
-
-REST APIs using Express
-
-Database via Prisma ORM
-
-Secure CORS configuration
-
-Deployed backend + frontend
+User identity stored using LocalStorage
 
 Fully responsive UI
 
-🧱 Architecture
+🛠 Admin Features
+
+Create new movie shows
+
+Define movie name, show time, and seat capacity
+
+View all available shows
+
+⚙ System Features
+
+REST APIs using Express.js
+
+PostgreSQL database with Prisma ORM
+
+Secure CORS configuration
+
+Auto-refresh polling for seat updates
+
+Deployed frontend & backend
+
+CI/CD via GitHub → Vercel & Render
+
+🧱 System Architecture
 Frontend (React + Vite, Vercel)
         |
-        | Axios HTTPS Requests
+        |  HTTPS (Axios)
         v
 Backend (Node.js + Express, Render)
         |
         v
 Database (PostgreSQL + Prisma)
 
-Frontend Structure
+📁 Project Structure
+Frontend
 src/
  ├─ pages/
  │   ├─ Home.jsx
@@ -89,7 +93,7 @@ src/
  ├─ App.jsx
  └─ main.jsx
 
-Backend Structure
+Backend
 backend/
  ├─ src/
  │   ├─ server.js
@@ -109,61 +113,57 @@ id	Int	Primary Key
 name	String	Movie name
 datetime	DateTime	Show time
 totalSeats	Int	Total seats
-availableSeats	Int	Seats left
+availableSeats	Int	Seats remaining
 Booking
 Field	Type	Description
 id	Int	Primary Key
-userName	String	User making the booking
+userName	String	User who booked
 showId	Int	Foreign key
 seats	Int[]	Booked seat numbers
 status	String	confirmed / cancelled
 createdAt	Date	Timestamp
 📡 API Documentation
 Base URL
-[https://modex-backend-ir7z.onrender.com](https://modex-backend-irt7.onrender.com)
+https://modex-backend-ir7z.onrender.com
 
-Show APIs
+🎥 Show APIs
+
 GET /shows
-
-Returns list of shows.
+Returns all available shows.
 
 GET /shows/:id
-
-Returns show details with seat info.
+Returns show details and seat availability.
 
 POST /shows (Admin)
-
 Creates a new show.
 
-Booking APIs
-POST /book
+🎟 Booking APIs
 
-Books X seats for a show.
+POST /book
+Book seats for a show.
 
 GET /bookings/:userName
-
-Returns all bookings made by the user.
+Fetch all bookings by a user.
 
 POST /cancel
-
-Cancels a booking.
+Cancel a booking.
 
 🚀 Deployment
 Frontend – Vercel
 
 Framework: React + Vite
 
-Deployed with automatic GitHub integration
+Auto-deployment via GitHub
 
 SPA routing handled via vercel.json
 
 Backend – Render
 
-Node.js Express server
+Node.js + Express server
 
-Runs via Docker or Node build
+PostgreSQL hosted on Render
 
-PostgreSQL database on Render
+Docker-based deployment
 
 Auto-redeploy on Git push
 
@@ -188,51 +188,39 @@ Prisma ORM
 
 PostgreSQL
 
-Other Tools
-
-Render (Hosting)
-
-Vercel (Frontend hosting)
+DevOps & Tools
 
 GitHub
 
-Dockerfile / render.yaml
+Vercel
 
-📸 Screenshots (Insert your screenshots here)
+Render
 
-Home Page
+Docker
 
-Booking Page
-
-My Bookings Page
-
-Admin Page
-
-Render Backend Dashboard
-
-Vercel Deployment Dashboard
+render.yaml
 
 ⚠ Limitations
 
-Render free tier may sleep → causes 503 waits
+Render free tier may sleep (initial 503 delay)
 
-Basic pseudo-auth (localStorage name only)
+Basic pseudo-authentication (LocalStorage only)
 
-No WebSocket live updates (polling only)
+Polling-based updates (no WebSockets)
 
-Admin has no login authentication
+Admin panel has no authentication
 
 🚀 Future Improvements
 
 JWT-based authentication
 
+WebSocket-based real-time seat updates
+
 Payment gateway integration
 
-Real-time WebSocket updates
+Admin analytics dashboard
 
-Analytics dashboard for admin
-
-Email/SMS booking confirmation
+Email/SMS booking confirmations
 
 📄 License
 
